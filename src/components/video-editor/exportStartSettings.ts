@@ -1,0 +1,93 @@
+import {
+	calculateOutputDimensions,
+	type ExportBackendPreference,
+	type ExportEncodingMode,
+	type ExportFormat,
+	type ExportMp4FrameRate,
+	type ExportPipelineModel,
+	type ExportQuality,
+	type ExportSettings,
+	GIF_SIZE_PRESETS,
+	type GifFrameRate,
+	type GifSizePreset,
+} from "@/lib/exporter";
+
+export function resolveExportStartSettings({
+	sourceWidth,
+	sourceHeight,
+	exportFormat,
+	includeCaptionSidecar,
+	exportEncodingMode,
+	exportQuality,
+	mp4FrameRate,
+	exportBackendPreference,
+	exportPipelineModel,
+	gifFrameRate,
+	gifLoop,
+	gifSizePreset,
+	brandedCardsEnabled,
+	brandCardTitle,
+	brandCardSubtitle,
+}: {
+	sourceWidth: number;
+	sourceHeight: number;
+	exportFormat: ExportFormat;
+	includeCaptionSidecar: boolean;
+	exportEncodingMode: ExportEncodingMode;
+	exportQuality: ExportQuality;
+	mp4FrameRate: ExportMp4FrameRate;
+	exportBackendPreference: ExportBackendPreference;
+	exportPipelineModel: ExportPipelineModel;
+	gifFrameRate: GifFrameRate;
+	gifLoop: boolean;
+	gifSizePreset: GifSizePreset;
+	brandedCardsEnabled: boolean;
+	brandCardTitle: string;
+	brandCardSubtitle: string;
+}): ExportSettings {
+	const gifDimensions =
+		exportFormat === "gif"
+			? calculateOutputDimensions(sourceWidth, sourceHeight, gifSizePreset, GIF_SIZE_PRESETS)
+			: null;
+
+	return {
+		format: exportFormat,
+		includeCaptionSidecar: exportFormat === "mp4" ? includeCaptionSidecar : false,
+		encodingMode: exportFormat === "mp4" ? exportEncodingMode : undefined,
+		mp4FrameRate: exportFormat === "mp4" ? mp4FrameRate : undefined,
+		backendPreference: exportFormat === "mp4" ? exportBackendPreference : undefined,
+		pipelineModel: exportFormat === "mp4" ? exportPipelineModel : undefined,
+		quality: exportFormat === "mp4" ? exportQuality : undefined,
+		gifConfig:
+			exportFormat === "gif" && gifDimensions
+				? {
+						frameRate: gifFrameRate,
+						loop: gifLoop,
+						sizePreset: gifSizePreset,
+						width: gifDimensions.width,
+						height: gifDimensions.height,
+					}
+				: undefined,
+		// MrRecorder branded intro/outro cards (applied post-export)
+		brandedCards:
+			exportFormat === "mp4" && brandedCardsEnabled
+				? {
+						enabled: true,
+						title: brandCardTitle || "Untitled",
+						subtitle: brandCardSubtitle,
+					}
+				: undefined,
+	};
+}
+
+export function resolveShareExportSettings(settings: ExportSettings): ExportSettings {
+	return {
+		...settings,
+		format: "mp4",
+		quality: "source",
+		encodingMode: "fast",
+		mp4FrameRate: 30,
+		includeCaptionSidecar: false,
+		gifConfig: undefined,
+	};
+}
