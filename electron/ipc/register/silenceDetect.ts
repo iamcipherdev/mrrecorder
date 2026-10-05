@@ -60,7 +60,7 @@ export function registerSilenceDetectionHandlers() {
 						out += d.toString();
 					});
 					proc.on("error", reject);
-					proc.on("close", () => {
+					proc.on("close", (_code) => {
 						// silencedetect always "processes" the file; non-zero exit
 						// usually means no audio stream — treat output as authoritative
 						resolve(out);
